@@ -1299,3 +1299,279 @@ Bit 6 (SS)  : Shadow stack access
 
 > **Final word**: This roadmap is ambitious. Real hobby OS projects (ToaruOS, skiftOS, uniOS) took years. Pick the next phase that excites you most and **ship it**. Each working [OK] in the boot log is a victory.
 
+
+---
+
+## 18. Phase 11 — AI-Native Operating System
+
+> "The OS should be self-documenting, self-verifying, and AI-accessible by design."
+
+**Difficulty: Medium (AI integration) + Hard (OS architecture) | Est. LOC: 1500+ | Time: 40-60 hours**
+
+### Vision
+Nova is designed as an **AI-native kernel**. Every subsystem exposes its state and capabilities via the Model Context Protocol (MCP). AI agents can inspect, debug, optimize, and even write code for the kernel — all through standardized tools and resources.
+
+```
+┌──────────────────────────────────────────────────────┐
+│                 NOVA AI-NATIVE OS                      │
+├──────────────────────────────────────────────────────┤
+│                                                      │
+│  ┌────────────────────────────────────────────┐      │
+│  │           MCP Server (kernel-mode)          │      │
+│  │  ┌─────────┐ ┌──────────┐ ┌────────────┐   │      │
+│  │  │ Tools   │ │Resources │ │  Prompts   │   │      │
+│  │  │(syscalls)│ │ (states) │ │(templates) │   │      │
+│  │  └─────────┘ └──────────┘ └────────────┘   │      │
+│  └────────────────────────────────────────────┘      │
+│                                                      │
+│  ┌────────────────────────────────────────────┐      │
+│  │        Security Verification Agent           │      │
+│  │  (static analysis + runtime verification)    │      │
+│  └────────────────────────────────────────────┘      │
+│                                                      │
+│  ┌────────────────────────────────────────────┐      │
+│  │            User-space AI Stack               │      │
+│  │  ┌──────────┐ ┌──────────┐ ┌────────────┐   │      │
+│  │  │  MCP     │ │  Dev     │ │ Auto-Doc   │   │      │
+│  │  │  Client  │ │  Agent   │ │ Generator  │   │      │
+│  │  └──────────┘ └──────────┘ └────────────┘   │      │
+│  │  ┌──────────┐ ┌──────────┐ ┌────────────┐   │      │
+│  │  │  Issue   │ │  Code    │ │  Security  │   │      │
+│  │  │  Creator │ │  Reviewer│ │  Verifier  │   │      │
+│  │  └──────────┘ └──────────┘ └────────────┘   │      │
+│  └────────────────────────────────────────────┘      │
+└──────────────────────────────────────────────────────┘
+```
+
+---
+
+### 18.1 MCP Server (Kernel-Mode)
+
+The MCP Server runs inside the kernel and exposes system capabilities to AI agents via the Model Context Protocol (MCP) — the open standard for LLM-tool integration (adopted by Anthropic, OpenAI, VS Code, JetBrains, and others, with the 2026 roadmap focusing on transport scalability and agent communication).
+
+**Available MCP Tools** (exposed via UNIX socket at `/var/mcp/nova.sock`):
+
+```json
+{
+  "tools": [
+    { "name": "nova.read_memory",
+      "description": "Read kernel memory at address",
+      "inputSchema": { "addr": "uint64", "size": "uint64" } },
+    { "name": "nova.get_processes",
+      "description": "List all running processes/tasks" },
+    { "name": "nova.get_cpu_usage",
+      "description": "Get per-CPU utilization" },
+    { "name": "nova.get_logs",
+      "description": "Retrieve kernel log messages",
+      "inputSchema": { "level": "string", "since_ms": "uint64" } },
+    { "name": "nova.set_sched_param",
+      "description": "Tune scheduler parameter live",
+      "inputSchema": { "param": "string", "value": "uint64" } },
+    { "name": "nova.gpu_status",
+      "description": "GPU engine utilization + temperature" },
+    { "name": "nova.profile_start/stop",
+      "description": "Start/stop kernel profiling" },
+    { "name": "nova.compile_check",
+      "description": "Verify kernel compiles with changes" }
+  ],
+  "resources": [
+    { "uri": "nova://cpu/usage",
+      "description": "Per-CPU usage telemetry" },
+    { "uri": "nova://memory/pages",
+      "description": "Page allocation breakdown" },
+    { "uri": "nova://scheduler/tasks",
+      "description": "Active task list and states" },
+    { "uri": "nova://drivers/gpu/status",
+      "description": "GPU driver status + metrics" }
+  ]
+}
+```
+
+**Implementation**:
+- [ ] MCP transport: UNIX domain socket (AF_UNIX) in kernel
+- [ ] MCP protocol frame parser (JSON-RPC 2.0)
+- [ ] Tool registration API: `mcp_register_tool(name, handler)`
+- [ ] Resource endpoint: `mcp_serve_resource(uri, callback)`
+- [ ] Security: auth via kernel-generated token, rate-limited
+- [ ] Integration: connect VS Code / Cursor / Claude Desktop to Nova
+
+```c
+// Example: registering an MCP tool in kernel
+static mcp_tool_t tool_get_cpu_usage = {
+    .name = "nova.get_cpu_usage",
+    .description = "Get per-CPU utilization percentage",
+    .handler = mcp_handler_get_cpu_usage,
+    .input_schema = "{}",  // no args
+    .auth_required = true,
+};
+mcp_register_tool(&tool_get_cpu_usage);
+
+// Handler writes response into MCP buffer
+static void mcp_handler_get_cpu_usage(mcp_req_t *req) {
+    mcp_write_json(req, "{cpu: [23, 45, 12, 67]}");
+}
+```
+
+---
+
+### 18.2 Security Verification Agent
+
+An automated AI agent that reviews every commit for security vulnerabilities:
+
+**Checks performed on each PR**:
+- [ ] **Buffer overflow detection**: scan `kmalloc`/`memcpy` patterns
+- [ ] **Use-after-free**: track `kfree(ptr)` → use of `ptr`
+- [ ] **Race conditions**: detect shared state without locks
+- [ ] **Integer overflow**: arithmetic on unchecked `size_t`
+- [ ] **TOCTOU**: double-fetch from user-space memory
+- [ ] **Format string**: `printk(msg)` where msg = user-controlled
+- [ ] **Uninitialized variables**: stack variables used before init
+- [ ] **Null pointer dereference**: missing NULL checks on kmalloc
+
+**CI Integration** (`.github/workflows/security.yml`):
+```yaml
+name: Security Audit
+on: [pull_request]
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - run: make  # build first
+      - run: nova-security-check ./kernel/  # AI analysis
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            // Post results as PR comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              body: results
+            })
+```
+
+---
+
+### 18.3 Auto-Documentation Generator
+
+Every function in the kernel is annotated with structured comments and automatically documented:
+
+```c
+/**
+ * @brief Allocate a zeroed page from physical memory manager
+ *
+ * @return void* Virtual address of page, NULL on OOM
+ *
+ * @performance O(1), < 10 ns
+ * @lock   Must NOT hold any lock (can trigger page table update)
+ * @smp    Per-CPU free stack, no cross-core access
+ * @test   pmm_alloc_10000_pages()
+ * @see    pmm_free(), pmm_alloc_contiguous()
+ */
+void *pmm_alloc(void) { ... }
+```
+
+**Pipeline**:
+1. `make docs` → parse all `@brief`, `@param`, `@return` tags
+2. AI generates: explanation in plain English, call graph, performance notes
+3. Output: `docs/` directory with HTML/Markdown
+4. Deploy to `ivan-cavero.github.io/nova/` via GitHub Pages
+
+---
+
+### 18.4 Dev Agent (AI Pair Programmer for Nova)
+
+An AI agent specifically trained on Nova source code that helps with:
+
+| Task | How AI helps |
+|------|--------------|
+| **Code generation** | Suggest implementation for Phase N from roadmap |
+| **Debug analysis** | Read kernel log → identify bug → suggest fix |
+| **Performance** | Profile hotspots → suggest optimization |
+| **Porting** | Suggest ARM64 equivalents of x86-64 code |
+| **Refactoring** | Identify dead code, simplify |
+| **Test writing** | Generate test cases from function signatures |
+
+The Dev Agent can be used via:
+- **MCP client** (VS Code, Cursor, Claude Desktop) → connect to Nova MCP server
+- **CLI tool**: `nova-ai "implement round-robin scheduler"`
+- **GitHub Action**: auto-suggest fixes on failed builds
+
+---
+
+### 18.5 Automatic Issue Creation from Roadmap
+
+```bash
+# scripts/roadmap-to-issues.sh
+#
+# Parses ROADMAP.md, finds unchecked checkboxes, creates GitHub issues
+#
+# ./roadmap-to-issues.sh --phase "Phase 1"
+# Creates:
+#   Issue "P1: Install IDT with 256 entry vectors"
+#     label: phase-1, difficulty: medium
+#   Issue "P1: Handle #PF page fault with CR2 decode"
+#     label: phase-1, depends: IDT-installed
+#   Issue "P1: PIT timer at 1000 Hz"
+#     label: phase-1, depends: PIC-remap
+#   Issue "P1: PS/2 keyboard driver"
+#     label: phase-1, depends: PIC-remap
+```
+
+**Features**:
+- [ ] Parse ROADMAP.md checkboxes
+- [ ] Create GitHub issues with labels, descriptions, priorities
+- [ ] Track dependencies between phases
+- [ ] Update issue status when checkbox is marked
+- [ ] Generate milestone with estimated hours
+- [ ] Post progress summary weekly via AI agent
+
+---
+
+### 18.6 MCP Client in Userspace
+
+Nova ships with a native MCP client that connects to any MCP server:
+
+```bash
+# Inside Nova shell:
+mcp-connect /var/mcp/nova.sock
+# Interactive mode: ask questions about kernel state
+mcp> how much memory is free?
+  → [nova.get_memory_stats] 54 MB free / 64 MB total
+mcp> is the GPU driver loaded?
+  → [nova.gpu_status] NVIDIA RTX 4060, VRAM 8GB, engine idle
+```
+
+This turns Nova into a **self-aware operating system** — it can introspect itself, explain its own state, and even debug itself with AI assistance.
+
+---
+
+### 18.7 Checklist
+
+- [ ] Kernel MCP server: transport + protocol + auth
+- [ ] MCP tool: `nova.read_memory(addr, size)`
+- [ ] MCP tool: `nova.get_processes()`
+- [ ] MCP tool: `nova.get_cpu_usage()`
+- [ ] MCP tool: `nova.get_logs(level, since)`
+- [ ] MCP resource: `nova://cpu/usage` (streaming)
+- [ ] MCP resource: `nova://memory/pages`
+- [ ] MCP resource: `nova://scheduler/tasks`
+- [ ] MCP resource: `nova://drivers/gpu/status`
+- [ ] Security agent: static analysis pipeline
+- [ ] Security agent: runtime verification (canary)
+- [ ] Auto-doc generator: `make docs`
+- [ ] Dev agent: `nova-ai` CLI tool
+- [ ] Roadmap → issues script
+- [ ] MCP client in userspace: `mcp-connect`
+- [ ] GitHub Pages documentation site
+
+### Timeline
+
+| Sub-phase | Est. hours | Depends on |
+|-----------|-----------|------------|
+| MCP transport (UNIX socket) | 10 | Syscalls (P7) |
+| MCP tools for kernel state | 15 | MCP transport |
+| Security agent pipeline | 8 | CI setup |
+| Auto-documentation | 6 | Security agent |
+| Dev agent CLI | 10 | MCP tools |
+| Roadmap → issues | 4 | Dev agent |
+| Userspace MCP client | 8 | MCP tools |
+| **Total** | **~61 hours** | |
