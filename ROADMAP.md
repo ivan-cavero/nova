@@ -1302,9 +1302,9 @@ Bit 6 (SS)  : Shadow stack access
 
 ---
 
-## 18. Phase 11 — AI-Native Operating System
+## 18. Phase 11 — Developer Experience & Automation
 
-> "The OS should be self-documenting, self-verifying, and AI-accessible by design."
+> Tooling, introspection, and automation for kernel development and system management.
 
 **Difficulty: Medium (AI integration) + Hard (OS architecture) | Est. LOC: 1500+ | Time: 40-60 hours**
 
@@ -1436,14 +1436,14 @@ void *pmm_alloc(void) { ... }
 
 ---
 
-### 18.4 Dev Agent (AI Pair Programmer for Nova)
+### 18.4 Dev Agent (Automated Code Assistant)
 
-An AI agent specifically trained on Nova source code that helps with:
+An automated assistant trained on Nova source code that helps with:
 
 | Task | How AI helps |
 |------|--------------|
-| **Code generation** | Suggest implementation for Phase N from roadmap |
-| **Debug analysis** | Read kernel log → identify bug → suggest fix |
+| **Code generation** | Suggest implementation for next roadmap phase |
+| **Debug analysis** | Parse kernel log → identify bug → suggest fix |
 | **Performance** | Profile hotspots → suggest optimization |
 | **Porting** | Suggest ARM64 equivalents of x86-64 code |
 | **Refactoring** | Identify dead code, simplify |
@@ -1485,12 +1485,12 @@ The Dev Agent can be used via:
 
 ---
 
-### 18.6 MCP Client in Userspace
+### 18.6 System Introspection Shell
 
-Nova ships with a native MCP client that connects to any MCP server:
+Nova ships with an introspection shell that queries system state:
 
 ```bash
-# Inside Nova shell:
+# Nova introspection shell:
 mcp-connect /var/mcp/nova.sock
 # Interactive mode: ask questions about kernel state
 mcp> how much memory is free?
@@ -1499,7 +1499,7 @@ mcp> is the GPU driver loaded?
   → [nova.gpu_status] NVIDIA RTX 4060, VRAM 8GB, engine idle
 ```
 
-This turns Nova into a **self-aware operating system** — it can introspect itself, explain its own state, and even debug itself with AI assistance.
+This gives Nova a **self-introspection capability** — query system state, diagnose issues, and automate development tasks.
 
 ---
 
@@ -1530,4 +1530,5 @@ This turns Nova into a **self-aware operating system** — it can introspect its
 | Roadmap → issues | 4 | Dev agent |
 | Userspace MCP client | 8 | MCP tools |
 | **Total** | **~61 hours** | |
+
 
