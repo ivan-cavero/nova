@@ -1308,67 +1308,26 @@ Bit 6 (SS)  : Shadow stack access
 
 **Difficulty: Medium (AI integration) + Hard (OS architecture) | Est. LOC: 1500+ | Time: 40-60 hours**
 
-### Vision
-Nova is designed as an **AI-native kernel**. Every subsystem exposes its state and capabilities via the Model Context Protocol (MCP). AI agents can inspect, debug, optimize, and even write code for the kernel — all through standardized tools and resources.
+### Design Principle - SECURITY WARNING
+**MCP at the kernel level is DANGEROUS.** Having an AI agent directly execute tools inside the kernel is a catastrophic security risk — prompt injection, parser bugs, or compromised AI clients would give full kernel control.
 
-```
-┌──────────────────────────────────────────────────────┐
-│                 NOVA AI-NATIVE OS                      │
-├──────────────────────────────────────────────────────┤
-│                                                      │
-│  ┌────────────────────────────────────────────┐      │
-│  │           MCP Server (kernel-mode)          │      │
-│  │  ┌─────────┐ ┌──────────┐ ┌────────────┐   │      │
-│  │  │ Tools   │ │Resources │ │  Prompts   │   │      │
-│  │  │(syscalls)│ │ (states) │ │(templates) │   │      │
-│  │  └─────────┘ └──────────┘ └────────────┘   │      │
-│  └────────────────────────────────────────────┘      │
-│                                                      │
-│  ┌────────────────────────────────────────────┐      │
-│  │        Security Verification Agent           │      │
-│  │  (static analysis + runtime verification)    │      │
-│  └────────────────────────────────────────────┘      │
-│                                                      │
-│  ┌────────────────────────────────────────────┐      │
-│  │            User-space AI Stack               │      │
-│  │  ┌──────────┐ ┌──────────┐ ┌────────────┐   │      │
-│  │  │  MCP     │ │  Dev     │ │ Auto-Doc   │   │      │
-│  │  │  Client  │ │  Agent   │ │ Generator  │   │      │
-│  │  └──────────┘ └──────────┘ └────────────┘   │      │
-│  │  ┌──────────┐ ┌──────────┐ ┌────────────┐   │      │
-│  │  │  Issue   │ │  Code    │ │  Security  │   │      │
-│  │  │  Creator │ │  Reviewer│ │  Verifier  │   │      │
-│  │  └──────────┘ └──────────┘ └────────────┘   │      │
-│  └────────────────────────────────────────────┘      │
-└──────────────────────────────────────────────────────┘
-```
+**Correct architecture**: MCP runs at the **OS (userspace) level** as a trusted system daemon (`mcpd`). It communicates with the kernel through the **same safe syscall interface** that any application uses. The kernel does not know about MCP — it just exports standard syscalls.
 
----
+### 18.1 MCP Daemon (Userspace System Service)
 
-### 18.1 MCP Server (Kernel-Mode)
+The MCP daemon (`mcpd`) runs as a **userspace system process** (ring 3, not ring 0). It translates MCP tool calls into **safe syscalls** and applies authentication, rate limiting, and audit logging. It exposes system capabilities to AI agents via the Model Context Protocol (MCP) — the open standard for LLM-tool integration (adopted by Anthropic, OpenAI, VS Code, JetBrains, and others, with the 2026 roadmap focusing on transport scalability and agent communication).
 
-The MCP Server runs inside the kernel and exposes system capabilities to AI agents via the Model Context Protocol (MCP) — the open standard for LLM-tool integration (adopted by Anthropic, OpenAI, VS Code, JetBrains, and others, with the 2026 roadmap focusing on transport scalability and agent communication).
-
-**Available MCP Tools** (exposed via UNIX socket at `/var/mcp/nova.sock`):
+**Available MCP Tools** (listening at `/var/run/mcpd.sock`):
 
 ```json
 {
   "tools": [
-    { "name": "nova.read_memory",
-      "description": "Read kernel memory at address",
-      "inputSchema": { "addr": "uint64", "size": "uint64" } },
-    { "name": "nova.get_processes",
       "description": "List all running processes/tasks" },
     { "name": "nova.get_cpu_usage",
       "description": "Get per-CPU utilization" },
     { "name": "nova.get_logs",
       "description": "Retrieve kernel log messages",
       "inputSchema": { "level": "string", "since_ms": "uint64" } },
-    { "name": "nova.set_sched_param",
-      "description": "Tune scheduler parameter live",
-      "inputSchema": { "param": "string", "value": "uint64" } },
-    { "name": "nova.gpu_status",
-      "description": "GPU engine utilization + temperature" },
     { "name": "nova.profile_start/stop",
       "description": "Start/stop kernel profiling" },
     { "name": "nova.compile_check",
@@ -1388,12 +1347,12 @@ The MCP Server runs inside the kernel and exposes system capabilities to AI agen
 ```
 
 **Implementation**:
-- [ ] MCP transport: UNIX domain socket (AF_UNIX) in kernel
+- [ ] MCP daemon: UNIX domain socket (AF_UNIX) in userspace
 - [ ] MCP protocol frame parser (JSON-RPC 2.0)
-- [ ] Tool registration API: `mcp_register_tool(name, handler)`
+- [ ] MCP tool registration: `mcpd --register-tool name handler`
 - [ ] Resource endpoint: `mcp_serve_resource(uri, callback)`
-- [ ] Security: auth via kernel-generated token, rate-limited
-- [ ] Integration: connect VS Code / Cursor / Claude Desktop to Nova
+- [ ] Security: JWT auth, rate-limiting, audit log
+- [ ] Integration: VS Code / Cursor / Claude Desktop connect to mcpd
 
 ```c
 // Example: registering an MCP tool in kernel
@@ -1547,10 +1506,6 @@ This turns Nova into a **self-aware operating system** — it can introspect its
 ### 18.7 Checklist
 
 - [ ] Kernel MCP server: transport + protocol + auth
-- [ ] MCP tool: `nova.read_memory(addr, size)`
-- [ ] MCP tool: `nova.get_processes()`
-- [ ] MCP tool: `nova.get_cpu_usage()`
-- [ ] MCP tool: `nova.get_logs(level, since)`
 - [ ] MCP resource: `nova://cpu/usage` (streaming)
 - [ ] MCP resource: `nova://memory/pages`
 - [ ] MCP resource: `nova://scheduler/tasks`
@@ -1575,3 +1530,4 @@ This turns Nova into a **self-aware operating system** — it can introspect its
 | Roadmap → issues | 4 | Dev agent |
 | Userspace MCP client | 8 | MCP tools |
 | **Total** | **~61 hours** | |
+
