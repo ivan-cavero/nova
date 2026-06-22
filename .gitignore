@@ -1,0 +1,22 @@
+# Build artifacts
+*.o
+*.bin
+*.iso
+iso/
+
+# Debug
+.gdb_history
+tags
+core.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Windows
+Thumbs.db
+
+# Logs
+*.log
