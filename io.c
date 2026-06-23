@@ -27,6 +27,10 @@ void serial_writestr(const char *data) {
     }
 }
 
+void serial_write(const char *data, size_t n) {
+    for (size_t i = 0; i < n; i++) serial_putchar(data[i]);
+}
+
 /* ==================== VGA ==================== */
 #define VGA_W 80
 #define VGA_H 25
@@ -78,6 +82,18 @@ void vga_putchar(char c) {
 
 void vga_writestr(const char *data) {
     while (*data) vga_putchar(*data++);
+}
+
+void vga_write(const char *data, size_t n) {
+    for (size_t i = 0; i < n; i++) vga_putchar(data[i]);
+}
+
+void vga_setfg(uint8_t fg) {
+    vga_color = fg | (vga_color & 0xF0);
+}
+
+void vga_setbg(uint8_t bg) {
+    vga_color = (vga_color & 0x0F) | (bg << 4);
 }
 
 /* ==================== BOOT LOG ==================== */
@@ -149,6 +165,60 @@ void log_fail(const char *msg) {
     serial_writestr(log_tag_serial(LOG_FAIL)); serial_writestr(msg); serial_putchar('\n');
 }
 
+void log_step(const char *msg) {
+    log_tag_vga(LOG_STEP); vga_putchar(' '); vga_writestr(msg); vga_putchar('\n');
+    serial_writestr(log_tag_serial(LOG_STEP)); serial_writestr(msg); serial_putchar('\n');
+}
+
+/* ==================== TWO-PHASE LOG ==================== */
+
+static size_t log_strlen(const char *s) {
+    const char *p = s;
+    while (*p) p++;
+    return (size_t)(p - s);
+}
+
+log_entry_t log_begin(const char *desc) {
+    log_entry_t e;
+
+    /* VGA: print pending tag + description, pad with dots */
+    log_tag_vga(LOG_INFO);
+    vga_putchar(' ');
+    vga_writestr(desc);
+    size_t len = log_strlen(desc);
+    for (size_t i = len; i < 56; i++) vga_putchar('.');
+    e.row = vga_row;
+    e.col = vga_col;
+
+    /* Serial: print description, result will follow */
+    serial_writestr(log_tag_serial(LOG_INFO));
+    serial_writestr(" ");
+    serial_writestr(desc);
+    serial_writestr("...");
+
+    return e;
+}
+
+void log_end(log_entry_t *e, bool success) {
+    (void)e; /* Position saved for future enhancements */
+
+    /* VGA: overwrite last 7 chars with result tag */
+    vga_col -= 7;
+    if (vga_col < 0) { vga_col = 0; }
+
+    vga_setcolor(success ? CLR_LBLUE : CLR_LRED, CLR_BLACK);
+    vga_putchar(' ');
+    vga_putchar('[');
+    if (success) { vga_writestr("OK"); }
+    else         { vga_writestr("FAIL"); }
+    vga_putchar(']');
+    vga_setcolor(CLR_LGREY, CLR_BLACK);
+    vga_putchar('\n');
+
+    /* Serial: append result */
+    serial_writestr(success ? " [OK]\n" : " [FAIL]\n");
+}
+
 /* ==================== BANNER ==================== */
 #define BOX_H  0xCD
 #define BOX_V  0xBA
@@ -158,18 +228,12 @@ void log_fail(const char *msg) {
 #define BOX_BR 0xBC
 #define BW 32
 
-static size_t log_strlen(const char *s) {
-    const char *p = s;
-    while (*p) p++;
-    return (size_t)(p - s);
-}
-
 static void box_line(const char *text, int w) {
     vga_putchar((char)BOX_V);
     vga_putchar(' ');
     vga_writestr(text);
-    int len = (int)log_strlen(text);
-    for (int i = len; i < w - 1; i++) vga_putchar(' ');
+    size_t len = log_strlen(text);
+    for (size_t i = len; i < (size_t)(w - 1); i++) vga_putchar(' ');
     vga_putchar((char)BOX_V);
     vga_putchar('\n');
 }

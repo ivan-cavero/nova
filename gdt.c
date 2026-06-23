@@ -4,8 +4,8 @@
 #include "io.h"
 #include "attributes.h"
 
-/* GDT table: 5 entries, 8 bytes each = 40 bytes total */
-static gdt_entry_t gdt_table[GDT_ENTRIES] = {
+/* GDT table: 5 entries, 8 bytes each = 40 bytes total — const → .rodata */
+static const gdt_entry_t gdt_table[GDT_ENTRIES] = {
     /* 0x00 — Null descriptor (required by CPU) */
     GDT_ENTRY(0, 0, 0, 0),
 

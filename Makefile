@@ -10,7 +10,8 @@ CFLAGS  = -ffreestanding -nostdlib -nostartfiles -nodefaultlibs \
           -Wstrict-aliasing=3 -Werror=vla -Wno-unused-parameter -Wno-missing-prototypes \
           -O3 -march=i686 -fomit-frame-pointer -fno-stack-protector \
           -fno-strict-aliasing -fno-exceptions -fno-asynchronous-unwind-tables \
-          -fno-pic -fno-pie -mno-red-zone -g -I.
+          -fno-pic -fno-pie -mno-red-zone -g -I. \
+          -MMD -MP
 
 LDFLAGS = -m elf_i386 -T linker.ld -nostdlib -z max-page-size=0x1000
 ASFLAGS = -f elf32 -g -F dwarf -Ox
@@ -61,5 +62,7 @@ size: $(KERNEL)
 	@nm -S --size-sort $(KERNEL) 2>/dev/null || true
 
 clean:
-	rm -f *.o $(KERNEL) $(ISO)
+	rm -f *.o *.d $(KERNEL) $(ISO)
 	rm -rf iso
+
+-include $(OBJS:.o=.d)

@@ -1,5 +1,6 @@
 # Build artifacts
 *.o
+*.d
 *.bin
 *.iso
 iso/
@@ -20,3 +21,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Backup
+*.bak

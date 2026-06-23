@@ -24,9 +24,10 @@ extern kernel_main
 
 _start:
     mov esp, stack_top
+    cld                         ; Direction flag: clear (forward string ops)
 
-    push ebx
-    push eax
+    push ebx                    ; Multiboot2 magic
+    push eax                    ; Multiboot2 info struct
 
     call kernel_main
 
