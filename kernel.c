@@ -2,6 +2,7 @@
 
 #include "io.h"
 #include "kernel.h"
+#include "gdt.h"
 #include "attributes.h"
 
 void kernel_main(uint32_t magic, uint32_t addr) {
@@ -18,7 +19,9 @@ void kernel_main(uint32_t magic, uint32_t addr) {
     log_info("Multiboot       : v2 (magic 0x36D76289)");
     log_ok("CPU             : i686 class, FPU on-board");
     log_ok("Memory          : 0x00000000 - 0x03FFFFFF (64 MB)");
-    log_ok("GDT             : 5-entry (null, code, data, user code, user data)");
+
+    /* Load our own GDT (GRUB provides a minimal one; we need 5 entries with user segments) */
+    gdt_init();
 
     vga_putchar('\n');
     vga_setcolor(CLR_LBLUE, CLR_BLACK);

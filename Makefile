@@ -18,7 +18,7 @@ ASFLAGS = -f elf32 -g -F dwarf -Ox
 KERNEL  = myKernel.bin
 ISO     = myKernel.iso
 
-OBJS = boot.o kernel.o io.o
+OBJS = boot.o kernel.o io.o gdt.o gdt_flush.o
 
 .PHONY: all clean run iso debug size
 
