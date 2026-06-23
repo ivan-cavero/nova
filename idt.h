@@ -88,7 +88,4 @@ void pic_remap(void);
 void exception_handler(registers_t *r);
 void irq_handler(registers_t *r);
 
-/* Assembly */
-extern void idt_flush(const idtr_t *idtr);
-
 #endif /* IDT_H */
