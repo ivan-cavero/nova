@@ -10,8 +10,8 @@
 1. [Philosophy & Design Goals](#1-philosophy--design-goals)
 2. [Architecture Overview](#2-architecture-overview)
 3. [Phase 0 — Foundation (COMPLETE)](#3-phase-0--foundation)
-4. [Phase 1 — Interrupt Infrastructure](#4-phase-1--interrupt-infrastructure)
-5. [Phase 2 — Memory Management](#5-phase-2--memory-management)
+4. [Phase 1 — Interrupt Infrastructure (COMPLETE)](#4-phase-1--interrupt-infrastructure)
+5. [Phase 2 — Memory Management (COMPLETE)](#5-phase-2--memory-management)
 6. [Phase 3 — Heap & Dynamic Allocation](#6-phase-3--heap--dynamic-allocation)
 7. [Phase 4 — SMP & Multicore](#7-phase-4--smp--multicore)
 8. [Phase 5 — Scheduler & Concurrency](#8-phase-5--scheduler--concurrency)
@@ -143,16 +143,16 @@ MODERNITY     → 64-bit only. No legacy 16/32-bit fallbacks.
 
 ---
 
-## 4. Phase 1 — Interrupt Infrastructure
+## 4. Phase 1 — Interrupt Infrastructure (COMPLETE)
 
 **Difficulty: Medium | Est. LOC: 250 | Time: 8-12 hours**
 
 ### Objectives
-- [ ] Install IDT with 256 entry vectors
-- [ ] Handle CPU exceptions (#DE, #GP, #PF, #DF)
-- [ ] Remap PIC (IRQ0-15 → INT 32-47)
-- [ ] PIT timer at 1000 Hz
-- [ ] PS/2 keyboard driver
+- [x] Install IDT with 256 entry vectors
+- [x] Handle CPU exceptions (#DE, #GP, #PF, #DF)
+- [x] Remap PIC (IRQ0-15 → INT 32-47)
+- [x] PIT timer at 1000 Hz
+- [x] PS/2 keyboard driver
 - [ ] Boot log output for each milestone
 
 ### 4.1 IDT Structure
@@ -256,7 +256,7 @@ IRQ0 unmasked → handler fires 1000/sec
 **Difficulty: Very Hard | Est. LOC: 700 | Time: 20-30 hours**
 
 ### Objectives
-- [ ] Physical memory manager (PMM): bitmap/stack allocator
+- [x] Physical memory manager (PMM): bitmap/stack allocator
 - [ ] 4-level page tables (PML4 → PDP → PD → PT)
 - [ ] `vmm_map()` / `vmm_unmap()` / `vmm_get_phys()`
 - [ ] Large pages (2MB, 1GB) for kernel and device DMA
@@ -1209,7 +1209,7 @@ Bit 6 (SS)  : Shadow stack access
 - [ ] Keyboard driver: scancode → ASCII, circular buffer
 - [ ] Boot log shows all milestones
 
-**Phase 2 — Memory Management**
+**Phase 2 — Memory Management (COMPLETE)**
 - [ ] PMM: free-stack allocator (O(1))
 - [ ] 4-level page tables (PML4 → PDP → PD → PT)
 - [ ] vmm_map / vmm_unmap / vmm_get_phys
