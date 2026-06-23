@@ -3,6 +3,10 @@
 #include "io.h"
 #include "kernel.h"
 #include "gdt.h"
+#include "idt.h"
+#include "timer.h"
+#include "keyboard.h"
+#include "ports.h"
 #include "attributes.h"
 
 void kernel_main(uint32_t magic, uint32_t addr) {
@@ -20,15 +24,27 @@ void kernel_main(uint32_t magic, uint32_t addr) {
     log_ok("CPU             : i686 class, FPU on-board");
     log_ok("Memory          : 0x00000000 - 0x03FFFFFF (64 MB)");
 
-    /* Load our own GDT (GRUB provides a minimal one; we need 5 entries with user segments) */
+    /* === Phase 0: Foundation === */
     gdt_init();
+
+    /* === Phase 1: Interrupt Infrastructure === */
+    idt_init();                    /* IDT + exceptions + PIC remap */
+
+    timer_init(TIMER_DEFAULT_FREQ); /* PIT timer at 1000 Hz */
+    keyboard_init();                /* PS/2 keyboard */
+
+    /* Unmask PIT (IRQ0) and keyboard (IRQ1) */
+    outb(PIC1_DATA, (uint8_t)(~((1U << 0) | (1U << 1))));
+
+    /* Enable interrupts globally */
+    sti();
 
     vga_putchar('\n');
     vga_setcolor(CLR_LBLUE, CLR_BLACK);
-    vga_writestr("  System ready. Halting CPU.");
+    vga_writestr("  System ready. Interrupts enabled.");
     vga_putchar('\n');
     vga_setcolor(CLR_LGREY, CLR_BLACK);
-    serial_writestr("\n  System ready. Halting CPU.\n");
+    serial_writestr("\n  System ready. Interrupts enabled.\n");
 
     while (1) {
         __asm__ volatile ("hlt");
