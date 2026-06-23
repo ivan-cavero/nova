@@ -3,6 +3,7 @@
 #include "io.h"
 #include "kernel.h"
 #include "gdt.h"
+#include "mm.h"
 #include "idt.h"
 #include "timer.h"
 #include "keyboard.h"
@@ -28,11 +29,15 @@ void kernel_main(uint32_t magic, uint32_t addr) {
     /* === Phase 0: Foundation === */
     gdt_init();
 
-    /* === Phase 1: Interrupt Infrastructure === */
-    idt_init();                    /* IDT + exceptions + PIC remap */
+    /* === Phase 2: Memory Management === */
+    pmm_init();                        /* Physical Memory Manager */
+    vmm_init();                        /* Virtual Memory Manager + paging */
 
-    timer_init(TIMER_DEFAULT_FREQ); /* PIT timer at 1000 Hz */
-    keyboard_init();                /* PS/2 keyboard */
+    /* === Phase 1: Interrupt Infrastructure === */
+    idt_init();                        /* IDT + exceptions + PIC remap */
+
+    timer_init(TIMER_DEFAULT_FREQ);    /* PIT timer at 1000 Hz */
+    keyboard_init();                   /* PS/2 keyboard */
 
     /* Unmask PIT (IRQ0) and keyboard (IRQ1) */
     outb(PIC1_DATA, (uint8_t)(~((1U << 0) | (1U << 1))));
@@ -40,7 +45,7 @@ void kernel_main(uint32_t magic, uint32_t addr) {
     /* Enable interrupts globally */
     sti();
 
-    /* Run Phase 1 verification test suite */
+    /* Run all tests */
     run_all_tests();
 
     vga_putchar('\n');

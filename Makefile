@@ -19,7 +19,8 @@ ASFLAGS = -f elf32 -g -F dwarf -Ox
 KERNEL  = myKernel.bin
 ISO     = myKernel.iso
 
-OBJS = boot.o kernel.o io.o gdt.o gdt_flush.o idt.o interrupt.o timer.o keyboard.o
+OBJS = boot.o kernel.o io.o gdt.o gdt_flush.o idt.o interrupt.o timer.o keyboard.o \
+       pmm.o vmm.o paging.o
 
 # Test suite — recursive wildcard
 TEST_SRCS := $(shell find tests -name '*.c' 2>/dev/null)

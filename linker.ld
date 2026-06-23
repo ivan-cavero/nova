@@ -6,6 +6,7 @@ ENTRY(_start)
 SECTIONS
 {
     . = 1M;
+    _kernel_start = .;
 
     .multiboot ALIGN(8) : {
         KEEP(*(.multiboot))
@@ -27,6 +28,8 @@ SECTIONS
         *(COMMON)
         *(.bss .bss.*)
     } :data
+
+    _kernel_end = ALIGN(4K);
 
     /DISCARD/ : {
         *(.comment)

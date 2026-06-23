@@ -42,7 +42,7 @@ static const char *test_pe(void) {
 }
 static const char *test_pg(void) {
     uint32_t cr0; __asm__ volatile ("mov %%cr0,%0" : "=r"(cr0));
-    if (cr0 & (1U<<31)) return "CR0.PG = 1";
+    if (!(cr0 & (1U<<31))) return "CR0.PG = 0 (paging disabled)";
     return NULL;
 }
 static const char *test_kcode_entry(void) {
@@ -62,6 +62,6 @@ void run_suite_gdt(void) {
     suite_add(&suite, "CS = 0x08",     "kernel code selector", test_cs);
     suite_add(&suite, "DS = 0x10",     "kernel data selector", test_ds);
     suite_add(&suite, "CR0.PE = 1",    "protected mode on",    test_pe);
-    suite_add(&suite, "CR0.PG = 0",    "paging disabled",      test_pg);
+suite_add(&suite, "CR0.PG = 1",    "paging enabled",        test_pg);
     suite_run(&suite);
 }
