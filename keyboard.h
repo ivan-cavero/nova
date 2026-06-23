@@ -22,6 +22,10 @@ bool keyboard_getchar(char *c);
 char keyboard_readchar(void);
 bool keyboard_has_data(void);
 
+/* Test injection (bypasses hardware) */
+void keyboard_test_reset(void);
+void keyboard_test_inject(uint8_t scancode);
+
 /* Called from IRQ1 handler */
 void keyboard_irq(void);
 

@@ -8,6 +8,7 @@
 #include "keyboard.h"
 #include "ports.h"
 #include "attributes.h"
+#include "test_runner.h"
 
 void kernel_main(uint32_t magic, uint32_t addr) {
     log_init();
@@ -39,12 +40,15 @@ void kernel_main(uint32_t magic, uint32_t addr) {
     /* Enable interrupts globally */
     sti();
 
+    /* Run Phase 1 verification test suite */
+    run_all_tests();
+
     vga_putchar('\n');
     vga_setcolor(CLR_LBLUE, CLR_BLACK);
-    vga_writestr("  System ready. Interrupts enabled.");
+    vga_writestr("  All tests complete. Halting CPU.");
     vga_putchar('\n');
     vga_setcolor(CLR_LGREY, CLR_BLACK);
-    serial_writestr("\n  System ready. Interrupts enabled.\n");
+    serial_writestr("\nAll tests complete. Halting CPU.\n");
 
     while (1) {
         __asm__ volatile ("hlt");

@@ -84,6 +84,9 @@ typedef struct {
 void idt_init(void);
 void pic_remap(void);
 
+/* Exposed for testing */
+extern const char * const exc_names[32];
+
 /* C handlers called from assembly stubs */
 void exception_handler(registers_t *r);
 void irq_handler(registers_t *r);

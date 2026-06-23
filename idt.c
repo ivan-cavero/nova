@@ -36,7 +36,7 @@ static void idt_set_gate(uint8_t vector, uint32_t handler, uint8_t flags) {
 
 /* ==================== Exception Names ==================== */
 
-static const char * const exc_names[32] = {
+const char * const exc_names[32] = {
     "#DE  Divide Error",                /* 0  */
     "#DB  Debug",                        /* 1  */
     "#NMI Non-maskable Interrupt",      /* 2  */

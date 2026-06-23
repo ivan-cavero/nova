@@ -1,0 +1,66 @@
+# Nova Kernel CI — runs on push/PR to main
+name: Nova CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install toolchain
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq \
+          build-essential nasm grub2 xorriso qemu-system-x86 \
+          gcc-multilib
+
+    - name: Build kernel
+      run: |
+        cd kernel
+        make clean all 2>&1
+
+    - name: Build ISO
+      run: |
+        cd kernel
+        make iso 2>&1
+
+    - name: Run tests in QEMU (capture serial output)
+      run: |
+        cd kernel
+        timeout 40 qemu-system-x86_64 \
+          -cdrom myKernel.iso \
+          -serial stdio \
+          -m 64 \
+          -no-reboot -no-shutdown \
+          -display none \
+          2>&1 | tee qemu-output.txt
+
+    - name: Check test results
+      run: |
+        if grep -q "FAIL" qemu-output.txt; then
+          echo "❌ Some tests FAILED:"
+          grep "FAIL" qemu-output.txt
+          exit 1
+        fi
+        if grep -q "Failed: 0" qemu-output.txt; then
+          echo "✅ All 33 runtime tests PASSED"
+        else
+          echo "❌ Test summary shows failures"
+          grep "Summary" qemu-output.txt
+          exit 1
+        fi
+
+    - name: Check build size
+      run: |
+        cd kernel
+        echo "Kernel binary size: $(wc -c < myKernel.bin) bytes"
+        echo "ISO size: $(wc -c < myKernel.iso) bytes"

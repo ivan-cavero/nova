@@ -9,7 +9,7 @@
 /* ==================== Scancode Set 1 → ASCII ==================== */
 
 /* Normal (unshifted) scancode -> ASCII mapping */
-static const char scancode_ascii[128] = {
+const char scancode_ascii[128] = {
     0,   0,   '1', '2', '3', '4', '5', '6', '7', '8',     /* 0-9 */
     '9', '0', '-', '=', 0,   0,   'q', 'w', 'e', 'r',     /* 10-19 */
     't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',0,       /* 20-29 */
@@ -26,7 +26,7 @@ static const char scancode_ascii[128] = {
 };
 
 /* Shifted scancode -> ASCII mapping */
-static const char scancode_shift[128] = {
+const char scancode_shift[128] = {
     0,   0,   '!', '@', '#', '$', '%', '^', '&', '*',     /* 0-9 */
     '(', ')', '_', '+', 0,   0,   'Q', 'W', 'E', 'R',     /* 10-19 */
     'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',0,       /* 20-29 */
@@ -132,4 +132,14 @@ char keyboard_readchar(void) {
     char c;
     while (!keyboard_getchar(&c)) { halt(); }
     return c;
+}
+
+/* ==================== Test injection helpers ==================== */
+void keyboard_test_reset(void) {
+    kbd_head = 0;
+    kbd_tail = 0;
+}
+
+void keyboard_test_inject(uint8_t scancode) {
+    keyboard_handle_scancode(scancode);
 }

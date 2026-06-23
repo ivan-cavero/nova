@@ -10,7 +10,7 @@ CFLAGS  = -ffreestanding -nostdlib -nostartfiles -nodefaultlibs \
           -Wstrict-aliasing=3 -Werror=vla -Wno-unused-parameter -Wno-missing-prototypes \
           -O3 -march=i686 -fomit-frame-pointer -fno-stack-protector \
           -fno-strict-aliasing -fno-exceptions -fno-asynchronous-unwind-tables \
-          -fno-pic -fno-pie -mno-red-zone -g -I. \
+          -fno-pic -fno-pie -mno-red-zone -g -I. -Itests \
           -MMD -MP
 
 LDFLAGS = -m elf_i386 -T linker.ld -nostdlib -z max-page-size=0x1000
@@ -21,10 +21,17 @@ ISO     = myKernel.iso
 
 OBJS = boot.o kernel.o io.o gdt.o gdt_flush.o idt.o interrupt.o timer.o keyboard.o
 
+# Test suite — recursive wildcard
+TEST_SRCS := $(shell find tests -name '*.c' 2>/dev/null)
+TEST_OBJS := $(TEST_SRCS:.c=.o)
+
+OBJS += $(TEST_OBJS)
+
 .PHONY: all clean run iso debug size
 
 all: $(KERNEL)
 
+# Compile any .c → .o, including subdirectories
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -63,6 +70,7 @@ size: $(KERNEL)
 
 clean:
 	rm -f *.o *.d $(KERNEL) $(ISO)
+	rm -f $(shell find tests -name '*.o' -o -name '*.d' 2>/dev/null)
 	rm -rf iso
 
 -include $(OBJS:.o=.d)
