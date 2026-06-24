@@ -47,7 +47,7 @@ iso: $(KERNEL)
 	mkdir -p iso/boot/grub
 	cp $(KERNEL) iso/boot/
 	cp boot/grub/grub.cfg iso/boot/grub/
-	grub-mkrescue -o $(ISO) iso 2>/dev/null
+	grub-mkrescue -o $(ISO) iso 2>&1
 	rm -rf iso
 	@echo "  ISO: $(ISO) ($$(wc -c < $(ISO)) bytes)"
 

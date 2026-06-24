@@ -20,7 +20,9 @@ jobs:
       run: |
         sudo apt-get update -qq
         sudo apt-get install -y -qq \
-          build-essential nasm grub2 xorriso qemu-system-x86 \
+          build-essential nasm \
+          grub-pc-bin grub-common \
+          xorriso qemu-system-x86 \
           gcc-multilib
 
     - name: Build kernel
