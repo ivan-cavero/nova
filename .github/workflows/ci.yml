@@ -24,18 +24,13 @@ jobs:
           gcc-multilib
 
     - name: Build kernel
-      run: |
-        cd kernel
-        make clean all 2>&1
+      run: make clean all 2>&1
 
     - name: Build ISO
-      run: |
-        cd kernel
-        make iso 2>&1
+      run: make iso 2>&1
 
     - name: Run tests in QEMU (capture serial output)
       run: |
-        cd kernel
         timeout 40 qemu-system-x86_64 \
           -cdrom myKernel.iso \
           -serial stdio \
@@ -61,6 +56,5 @@ jobs:
 
     - name: Check build size
       run: |
-        cd kernel
         echo "Kernel binary size: $(wc -c < myKernel.bin) bytes"
         echo "ISO size: $(wc -c < myKernel.iso) bytes"
