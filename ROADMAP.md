@@ -12,7 +12,7 @@
 3. [Phase 0 — Foundation (COMPLETE)](#3-phase-0--foundation)
 4. [Phase 1 — Interrupt Infrastructure (COMPLETE)](#4-phase-1--interrupt-infrastructure)
 5. [Phase 2 — Memory Management (COMPLETE)](#5-phase-2--memory-management)
-6. [Phase 3 — Heap & Dynamic Allocation](#6-phase-3--heap--dynamic-allocation)
+6. [Phase 3 — Heap & Dynamic Allocation (COMPLETE)](#6-phase-3--heap--dynamic-allocation)
 7. [Phase 4 — SMP & Multicore](#7-phase-4--smp--multicore)
 8. [Phase 5 — Scheduler & Concurrency](#8-phase-5--scheduler--concurrency)
 9. [Phase 6 — 64-bit Transition](#9-phase-6--64-bit-transition)
@@ -364,7 +364,7 @@ if (size >= 0x40000000 && (virt & 0x3FFFFFFF) == 0) {
 
 ---
 
-## 6. Phase 3 — Heap & Slab Allocator
+## 6. Phase 3 — Heap & Slab Allocator  ✅ COMPLETE
 
 **Difficulty: Medium-Hard | Est. LOC: 400 | Time: 10-15 hours**
 
