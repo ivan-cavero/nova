@@ -10,6 +10,7 @@
 #include "ports.h"
 #include "attributes.h"
 #include "test_runner.h"
+#include "heap.h"
 
 void kernel_main(uint32_t magic, uint32_t addr) {
     log_init();
@@ -44,6 +45,9 @@ void kernel_main(uint32_t magic, uint32_t addr) {
 
     /* Enable interrupts globally */
     sti();
+
+    /* === Phase 3: Heap (Slab Allocator) === */
+    heap_init();
 
     /* Run all tests */
     run_all_tests();

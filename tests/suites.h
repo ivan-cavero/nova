@@ -10,5 +10,6 @@ void run_suite_timer(void);
 void run_suite_pic(void);
 void run_suite_keyboard(void);
 void run_suite_exceptions(void);
+void run_suite_heap(void);
 
 #endif /* TESTS_SUITES_H */

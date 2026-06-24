@@ -5,9 +5,10 @@ ASM     = nasm
 CFLAGS  = -ffreestanding -nostdlib -nostartfiles -nodefaultlibs \
           -m32 -Wall -Wextra -Wpedantic -Wshadow -Wconversion \
           -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes \
-          -Wmissing-declarations -Wredundant-decls -Wnested-externs \
+          -Wmissing-declarations -Wredundant-decls -Wno-misleading-indentation \
           -Wcast-qual -Wcast-align -Wwrite-strings -Wpointer-arith \
           -Wstrict-aliasing=3 -Werror=vla -Wno-unused-parameter -Wno-missing-prototypes \
+          -Wno-misleading-indentation \
           -O3 -march=i686 -fomit-frame-pointer -fno-stack-protector \
           -fno-strict-aliasing -fno-exceptions -fno-asynchronous-unwind-tables \
           -fno-pic -fno-pie -mno-red-zone -g -I. -Itests \
@@ -20,7 +21,7 @@ KERNEL  = myKernel.bin
 ISO     = myKernel.iso
 
 OBJS = boot.o kernel.o io.o gdt.o gdt_flush.o idt.o interrupt.o timer.o keyboard.o \
-       pmm.o vmm.o paging.o
+       pmm.o vmm.o paging.o heap.o
 
 # Test suite — recursive wildcard
 TEST_SRCS := $(shell find tests -name '*.c' 2>/dev/null)
